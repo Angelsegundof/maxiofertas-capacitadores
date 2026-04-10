@@ -21,6 +21,11 @@ export default function NuevoVendedor() {
       status: "Agregado",
       confirmacion: "Si",
       sucursal: "",
+      nombreVendedor: "",
+      telefono: "",
+      nickname: "",
+      correo: "",
+      fecha: "",
     }
   });
 
