@@ -8,4 +8,5 @@ const withPWA = withPWAInit({
 export default withPWA({
   // Next.js config options here
   reactStrictMode: true,
+  turbopack: {}, // Silencia el error de conflicto de Webpack v/s Turbopack
 });
