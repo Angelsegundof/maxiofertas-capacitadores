@@ -76,12 +76,21 @@ export async function syncHistoricVendorsAction(trainerUid: string, trainerName:
     }
 
     // Calcular cuántos de estos ya están en Firestore (para no contarlos doble)
+    // Obtenemos todos los del capacitador y filtramos la fecha en memoria 
+    // para evitar el requerimiento estricto del "Índice Compuesto" de Firebase
     const snapshot = await adminDb.collection("vendors")
       .where("registeredByUid", "==", trainerUid)
-      .where("createdAt", ">=", startFilterDate.getTime())
       .get();
       
-    const firestoreCount = snapshot.size;
+    let firestoreCount = 0;
+    const filterTime = startFilterDate.getTime();
+    
+    snapshot.forEach(doc => {
+       const data = doc.data();
+       if (data.createdAt >= filterTime) {
+         firestoreCount++;
+       }
+    });
     
     // El "offset" (histórico puro de Google Sheets no registrado acá) es la resta
     // (Asegurando que no sea negativo si hay inconsistencias menores)
