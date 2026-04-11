@@ -3,10 +3,11 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { db } from "@/lib/firebase/config";
 import { UserProfile } from "@/types";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { collection, query, where, getDocs, onSnapshot } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { Users, Info, RefreshCw, CheckCircle2, History } from "lucide-react";
+import { Users, Info, RefreshCw, CheckCircle2, History, PlusCircle, AlertCircle } from "lucide-react";
 import { syncHistoricVendorsAction } from "@/app/actions/historic";
+import { createTrainerAction } from "@/app/actions/trainers";
 
 export default function CapacitadoresAdminPage() {
   const { profile } = useAuth();
@@ -17,6 +18,11 @@ export default function CapacitadoresAdminPage() {
   const [syncingId, setSyncingId] = useState<string | null>(null);
   const [syncDates, setSyncDates] = useState<Record<string, string>>({}); // uid -> date
   const [message, setMessage] = useState<{type: "error" | "success", text: string} | null>(null);
+
+  // Estados de Creación de Nvo Capacitador
+  const [isCreating, setIsCreating] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [formData, setFormData] = useState({ name: "", email: "", password: "" });
 
   useEffect(() => {
     async function fetchTrainers() {
@@ -50,7 +56,7 @@ export default function CapacitadoresAdminPage() {
     }
 
     fetchTrainers();
-  }, [profile]);
+  }, [profile, isCreating]); // Refetch if a new one is created
 
   const handleSyncHistoric = async (trainer: UserProfile) => {
     const startDate = syncDates[trainer.uid];
@@ -86,20 +92,79 @@ export default function CapacitadoresAdminPage() {
 
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="mb-8">
-        <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center">
-          <History className="mr-3 text-blue-600" size={32} />
-          Cortes Históricos de Capacitadores
-        </h1>
-        <p className="mt-2 text-slate-500 text-lg">
-          Configura la fecha de inicio del corte histórico para calcular cuántos vendedores tienen en Google Sheets.
-        </p>
+      <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
+        <div>
+          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center">
+            <History className="mr-3 text-blue-600" size={32} />
+            Gestión de Capacitadores
+          </h1>
+          <p className="mt-2 text-slate-500 text-lg">
+            Configura el histórico o crea nuevos perfiles de capacitador para el sistema.
+          </p>
+        </div>
+        <button 
+          onClick={() => setShowForm(!showForm)}
+          className="inline-flex items-center justify-center px-5 py-2.5 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-500 transition-colors shadow-sm"
+        >
+          <PlusCircle className="mr-2" size={20} />
+          {showForm ? "Ocultar Formulario" : "Nuevo Capacitador"}
+        </button>
       </div>
 
       {message && (
         <div className={`mb-6 p-4 rounded-xl flex items-center gap-3 ${message.type === "success" ? "bg-emerald-50 text-emerald-800 border border-emerald-200" : "bg-red-50 text-red-800 border border-red-200"}`}>
-          {message.type === "success" ? <CheckCircle2 size={24} className="text-emerald-500" /> : <Info size={24} className="text-red-500" />}
+          {message.type === "success" ? <CheckCircle2 size={24} className="text-emerald-500 flex-shrink-0" /> : <AlertCircle size={24} className="text-red-500 flex-shrink-0" />}
           <span className="font-medium">{message.text}</span>
+        </div>
+      )}
+
+      {showForm && (
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-8 animate-in fade-in slide-in-from-top-4">
+          <h2 className="text-lg font-bold text-slate-800 mb-4">Registrar Nuevo Capacitador</h2>
+          <div className="flex flex-col md:flex-row gap-4">
+            <input 
+              type="text" 
+              placeholder="Nombre Completo" 
+              className="flex-1 px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+              value={formData.name}
+              onChange={e => setFormData({...formData, name: e.target.value})}
+            />
+            <input 
+              type="email" 
+              placeholder="Correo Electrónico" 
+              className="flex-1 px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+              value={formData.email}
+              onChange={e => setFormData({...formData, email: e.target.value})}
+            />
+            <input 
+              type="password" 
+              placeholder="Contraseña (Mín. 6)" 
+              className="flex-1 px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+              value={formData.password}
+              onChange={e => setFormData({...formData, password: e.target.value})}
+            />
+            <button
+              onClick={async () => {
+                if(!formData.name || !formData.email || !formData.password) {
+                  setMessage({ type:"error", text: "Llena todos los campos."}); return;
+                }
+                setIsCreating(true);
+                const res = await createTrainerAction(formData);
+                if (res.success) {
+                  setMessage({ type: "success", text: "Capacitador creado exitosamente!" });
+                  setFormData({ name: "", email: "", password: "" });
+                  setShowForm(false);
+                } else {
+                  setMessage({ type: "error", text: res.error || "Ocurrió un error." });
+                }
+                setIsCreating(false);
+              }}
+              disabled={isCreating}
+              className="px-6 py-2 bg-slate-900 text-white rounded-xl hover:bg-slate-800 disabled:opacity-50 font-medium"
+            >
+              {isCreating ? "Creando..." : "Guardar"}
+            </button>
+          </div>
         </div>
       )}
 
