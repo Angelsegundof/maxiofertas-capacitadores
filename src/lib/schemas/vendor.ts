@@ -8,8 +8,8 @@ export const vendorSchema = z.object({
   correo: z.string().email("Correo electrónico no válido"),
   sucursal: z.string().min(2, "La sucursal es obligatoria"),
   nombreRegistrador: z.string().min(2, "El nombre del registrador es obligatorio"),
-  status: z.string().default("Agregado"),
-  confirmacion: z.string().default("Si"),
+  status: z.string(),
+  confirmacion: z.string(),
 });
 
 export type VendorFormData = z.infer<typeof vendorSchema>;
