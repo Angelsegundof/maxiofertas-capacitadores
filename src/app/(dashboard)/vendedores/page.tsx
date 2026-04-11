@@ -138,11 +138,11 @@ export default function VendedoresPage() {
 
         {/* Panel Resumen Comisión */}
         <div className="bg-blue-50/50 border-b border-blue-100/50 px-5 py-3 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="text-sm">
-            <span className="text-slate-500">Mostrando registros nuevos: </span>
+          <div className="text-sm border border-blue-200 bg-white shadow-sm rounded-lg px-3 py-1.5 flex items-center gap-2">
+            <span className="text-slate-500 font-medium">Registros listados: </span>
             <span className="font-bold text-blue-900">{filteredVendors.length} vendedores</span>
             {historicOffset > 0 && (
-               <span className="text-xs text-slate-400 ml-2">(+ {historicOffset} del corte inicial en Sheets)</span>
+               <span className="text-xs text-slate-400 ml-1">(+ {historicOffset} cortes legacy)</span>
             )}
           </div>
           <div className="flex items-center gap-2">

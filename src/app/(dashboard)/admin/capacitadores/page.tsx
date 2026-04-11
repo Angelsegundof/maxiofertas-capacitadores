@@ -71,12 +71,16 @@ export default function CapacitadoresAdminPage() {
     const res = await syncHistoricVendorsAction(trainer.uid, trainer.name, startDate);
 
     if (res.success) {
-      setMessage({ type: "success", text: `Se sincronizaron ${res.count} registros históricos para ${trainer.name}.` });
+      if (res.count && res.count > 0) {
+        setMessage({ type: "success", text: `Se han recuperado e insertado exitosamente ${res.count} vendedores históricos a la base de datos de ${trainer.name}.` });
+      } else {
+        setMessage({ type: "success", text: `La base de datos ya está completamente sincronizada. Tiene ${res.totalSheet} vendedores validados en la fecha seleccionada.` });
+      }
       
       // Actualizar estado local
       setTrainers(prev => prev.map(t => 
         t.uid === trainer.uid 
-          ? { ...t, historicCount: res.count, historicCutoffDate: startDate }
+          ? { ...t, historicCount: res.totalSheet, historicCutoffDate: startDate }
           : t
       ));
     } else {
