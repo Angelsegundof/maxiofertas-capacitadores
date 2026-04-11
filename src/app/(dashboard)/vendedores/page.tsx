@@ -80,7 +80,8 @@ export default function VendedoresPage() {
     return searchMatch && dateMatch;
   });
 
-  const progressCount = filteredVendors.length;
+  const historicOffset = profile?.historicCount || 0;
+  const progressCount = filteredVendors.length + historicOffset;
   // Calculamos la meta de la comisión actual: Múltiplos de 60
   const currentCommissionGoal = (Math.floor(progressCount / 60) + 1) * 60;
 
@@ -138,8 +139,11 @@ export default function VendedoresPage() {
         {/* Panel Resumen Comisión */}
         <div className="bg-blue-50/50 border-b border-blue-100/50 px-5 py-3 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="text-sm">
-            <span className="text-slate-500">Mostrando registros: </span>
-            <span className="font-bold text-blue-900">{progressCount} vendedores</span>
+            <span className="text-slate-500">Mostrando registros nuevos: </span>
+            <span className="font-bold text-blue-900">{filteredVendors.length} vendedores</span>
+            {historicOffset > 0 && (
+               <span className="text-xs text-slate-400 ml-2">(+ {historicOffset} del corte inicial en Sheets)</span>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold text-blue-600 uppercase tracking-wide">Comisión:</span>

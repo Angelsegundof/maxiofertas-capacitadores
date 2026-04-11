@@ -8,6 +8,8 @@ export interface UserProfile {
   active: boolean;
   createdAt: number;
   createdBy?: string;
+  historicCount?: number;
+  historicCutoffDate?: string;
 }
 
 export interface Video {

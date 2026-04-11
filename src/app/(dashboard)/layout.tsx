@@ -18,7 +18,8 @@ export default function DashboardLayout({
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
     { name: "Mis Vendedores", href: "/vendedores", icon: Users },
     { name: "Registrar Vendedor", href: "/vendedores/nuevo", icon: PlusCircle },
-    { name: "Videos de Capacitación", href: "/videos", icon: Video },
+    { name: "Videos", href: "/videos", icon: Video },
+    ...(profile?.role === "admin" ? [{ name: "Capacitadores", href: "/admin/capacitadores", icon: Users }] : []),
   ];
 
   return (
