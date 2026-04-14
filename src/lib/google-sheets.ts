@@ -28,6 +28,7 @@ export async function appendToGoogleSheet(values: any[]) {
       spreadsheetId,
       range,
       valueInputOption: "USER_ENTERED",
+      insertDataOption: "INSERT_ROWS",
       requestBody: {
         values: [values],
       },
