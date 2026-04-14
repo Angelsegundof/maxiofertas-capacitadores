@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { Copy, Share2, PlayCircle, Library } from "lucide-react";
-import { toast } from "sonner"; // Opcional, o simplemente omitimos toasts complejos
 
 interface VideoData {
   id: string;
