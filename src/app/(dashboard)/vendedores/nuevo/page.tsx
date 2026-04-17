@@ -198,6 +198,7 @@ export default function NuevoVendedor() {
                   <option value="Chillan">Chillán</option>
                   <option value="Concepcion">Concepción</option>
                   <option value="Copiapo">Copiapó</option>
+                  <option value="Curico">Curicó</option>
                   <option value="La Serena">La Serena</option>
                   <option value="Los Angeles">Los Ángeles</option>
                   <option value="Puerto Montt">Puerto Montt</option>
