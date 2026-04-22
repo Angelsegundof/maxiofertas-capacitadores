@@ -5,9 +5,9 @@ import { db } from "@/lib/firebase/config";
 import { UserProfile } from "@/types";
 import { collection, query, where, getDocs, onSnapshot } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { Users, Info, RefreshCw, CheckCircle2, History, PlusCircle, AlertCircle } from "lucide-react";
+import { Users, Info, RefreshCw, CheckCircle2, History, PlusCircle, AlertCircle, Edit2, Trash2, X } from "lucide-react";
 import { syncHistoricVendorsAction } from "@/app/actions/historic";
-import { createTrainerAction } from "@/app/actions/trainers";
+import { createTrainerAction, updateTrainerAction, deleteTrainerAction } from "@/app/actions/trainers";
 
 export default function CapacitadoresAdminPage() {
   const { profile } = useAuth();
@@ -23,6 +23,13 @@ export default function CapacitadoresAdminPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({ name: "", email: "", password: "" });
+
+  // Estados de Edición/Eliminación
+  const [editingTrainer, setEditingTrainer] = useState<UserProfile | null>(null);
+  const [editFormData, setEditFormData] = useState({ name: "", email: "", password: "" });
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     async function fetchTrainers() {
@@ -56,7 +63,40 @@ export default function CapacitadoresAdminPage() {
     }
 
     fetchTrainers();
-  }, [profile, isCreating]); // Refetch if a new one is created
+  }, [profile, isCreating, refreshKey]); // Refetch if a new one is created, or updated/deleted
+
+  const handleEditClick = (trainer: UserProfile) => {
+    setEditingTrainer(trainer);
+    setEditFormData({ name: trainer.name, email: trainer.email || "", password: "" });
+  };
+
+  const handleUpdate = async () => {
+    if (!editingTrainer) return;
+    setIsUpdating(true);
+    const res = await updateTrainerAction({ uid: editingTrainer.uid, ...editFormData });
+    if (res.success) {
+      setMessage({ type: "success", text: "Capacitador actualizado exitosamente!" });
+      setEditingTrainer(null);
+      setRefreshKey(prev => prev + 1);
+    } else {
+      setMessage({ type: "error", text: res.error || "Ocurrió un error al actualizar." });
+    }
+    setIsUpdating(false);
+  };
+
+  const handleDelete = async (trainer: UserProfile) => {
+    if (!confirm(`¿Estás seguro de que deseas eliminar al capacitador ${trainer.name}? Esta acción no se puede deshacer.`)) return;
+    
+    setIsDeleting(trainer.uid);
+    const res = await deleteTrainerAction(trainer.uid);
+    if (res.success) {
+      setMessage({ type: "success", text: "Capacitador eliminado exitosamente!" });
+      setRefreshKey(prev => prev + 1);
+    } else {
+      setMessage({ type: "error", text: res.error || "Ocurrió un error al eliminar." });
+    }
+    setIsDeleting(null);
+  };
 
   const handleSyncHistoric = async (trainer: UserProfile) => {
     const startDate = syncDates[trainer.uid];
@@ -119,6 +159,65 @@ export default function CapacitadoresAdminPage() {
         <div className={`mb-6 p-4 rounded-xl flex items-center gap-3 ${message.type === "success" ? "bg-emerald-50 text-emerald-800 border border-emerald-200" : "bg-red-50 text-red-800 border border-red-200"}`}>
           {message.type === "success" ? <CheckCircle2 size={24} className="text-emerald-500 flex-shrink-0" /> : <AlertCircle size={24} className="text-red-500 flex-shrink-0" />}
           <span className="font-medium">{message.text}</span>
+        </div>
+      )}
+
+      {editingTrainer && (
+        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center p-6 border-b border-slate-100">
+              <h2 className="text-xl font-bold text-slate-800">Editar Capacitador</h2>
+              <button onClick={() => setEditingTrainer(null)} className="text-slate-400 hover:text-slate-600 transition-colors">
+                <X size={24} />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Nombre Completo</label>
+                <input 
+                  type="text" 
+                  className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={editFormData.name}
+                  onChange={e => setEditFormData({...editFormData, name: e.target.value})}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Correo Electrónico</label>
+                <input 
+                  type="email" 
+                  className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={editFormData.email}
+                  onChange={e => setEditFormData({...editFormData, email: e.target.value})}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Nueva Contraseña <span className="text-slate-400 font-normal">(Opcional)</span></label>
+                <input 
+                  type="password" 
+                  placeholder="Dejar en blanco para mantener la actual"
+                  className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={editFormData.password}
+                  onChange={e => setEditFormData({...editFormData, password: e.target.value})}
+                />
+              </div>
+            </div>
+            <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+              <button 
+                onClick={() => setEditingTrainer(null)}
+                className="px-5 py-2 text-slate-600 font-medium hover:bg-slate-200 bg-slate-100 rounded-xl transition-colors"
+                disabled={isUpdating}
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={handleUpdate}
+                disabled={isUpdating || !editFormData.name || !editFormData.email}
+                className="px-5 py-2 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-500 disabled:opacity-50 transition-colors"
+              >
+                {isUpdating ? "Guardando..." : "Guardar Cambios"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -212,7 +311,7 @@ export default function CapacitadoresAdminPage() {
                     <button
                       onClick={() => handleSyncHistoric(trainer)}
                       disabled={syncingId === trainer.uid || !syncDates[trainer.uid]}
-                      className="inline-flex items-center justify-center px-4 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+                      className="inline-flex items-center justify-center px-4 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm mr-2"
                     >
                       {syncingId === trainer.uid ? (
                         <>
@@ -222,6 +321,21 @@ export default function CapacitadoresAdminPage() {
                       ) : (
                         "Importar Cálculo"
                       )}
+                    </button>
+                    <button
+                      onClick={() => handleEditClick(trainer)}
+                      className="inline-flex items-center justify-center p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors mr-1"
+                      title="Editar Capacitador"
+                    >
+                      <Edit2 size={18} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(trainer)}
+                      disabled={isDeleting === trainer.uid}
+                      className="inline-flex items-center justify-center p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                      title="Eliminar Capacitador"
+                    >
+                      {isDeleting === trainer.uid ? <RefreshCw className="animate-spin" size={18} /> : <Trash2 size={18} />}
                     </button>
                   </td>
                 </tr>
