@@ -8,6 +8,16 @@ import { createVendorAction } from "@/app/actions/vendors";
 import { useState, useEffect } from "react";
 import { CheckCircle2, UserPlus, FileText, Phone, Mail, Building, Tag } from "lucide-react";
 
+/** Helper component for Icons inside inputs */
+const InputWrapper = ({ icon: Icon, error, children }: any) => (
+  <div className="relative group">
+    <div className={`absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none transition-colors ${error ? 'text-red-400' : 'text-slate-400 group-focus-within:text-blue-500'}`}>
+      <Icon className="h-5 w-5" />
+    </div>
+    {children}
+  </div>
+);
+
 export default function NuevoVendedor() {
   const { profile } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -72,16 +82,6 @@ export default function NuevoVendedor() {
       setIsSubmitting(false);
     }
   };
-
-  /** Helper component for Icons inside inputs */
-  const InputWrapper = ({ icon: Icon, error, children }: any) => (
-    <div className="relative group">
-      <div className={`absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none transition-colors ${error ? 'text-red-400' : 'text-slate-400 group-focus-within:text-blue-500'}`}>
-        <Icon className="h-5 w-5" />
-      </div>
-      {children}
-    </div>
-  );
 
   return (
     <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
